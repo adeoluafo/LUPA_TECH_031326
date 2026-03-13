@@ -48,7 +48,7 @@ def inject_styles() -> None:
             background: #FFFFFF;
             border: 1px solid #D9E2EC;
             border-radius: 18px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 8px 20px rgba(7, 28, 60, 0.05);
         }
         .header-card { padding: 20px; margin-bottom: 24px; }
         .header-row {
@@ -63,6 +63,19 @@ def inject_styles() -> None:
             color: #0F172A;
             line-height: 1.1;
         }
+        .welcome-mark {
+            font-size: 28px;
+            font-weight: 500;
+            color: #0A2A66;
+            line-height: 1;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        .header-brand {
+            font-size: 18px;
+            font-weight: 600;
+            color: #071C3C;
+        }
         .status-chip {
             display: inline-flex;
             align-items: center;
@@ -76,6 +89,13 @@ def inject_styles() -> None:
         }
         .vp-control-card { padding: 18px 18px 16px 18px; min-height: 148px; }
         .vp-card { padding: 18px 20px 20px 20px; }
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background: #FFFFFF;
+            border: 1px solid #D9E2EC;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(7, 28, 60, 0.05);
+            padding: 18px 20px 20px 20px;
+        }
         .section-title {
             font-size: 18px;
             font-weight: 600;
@@ -130,22 +150,56 @@ def inject_styles() -> None:
             border: 1px solid #E8EEF5;
             border-radius: 14px;
             padding: 16px;
+            position: relative;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+        }
+        .metric-cell::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 4px;
+            border-radius: 14px 14px 0 0;
+            background: #D9E2EC;
+        }
+        .metric-primary::before { background: #0B63CE; }
+        .metric-discovery::before { background: #071C3C; }
+        .metric-accuracy::before { background: #138A36; }
+        .metric-trust::before { background: #C47F00; }
+        .metric-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            background: #EEF4FB;
+            color: #0A2A66;
         }
         .metric-value {
-            font-size: 24px;
+            font-size: 30px;
             font-weight: 600;
             color: #0A2A66;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .metric-sub {
             font-size: 13px;
             color: #475569;
         }
+        .metric-secondary {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 10px;
+        }
         .response-item {
             border: 1px solid #E8EEF5;
             border-radius: 14px;
             padding: 14px;
-            background: #FFFFFF;
+            background: linear-gradient(180deg, #FFFFFF 0%, #FCFDFE 100%);
         }
         .response-item + .response-item { margin-top: 12px; }
         .response-name {
@@ -163,6 +217,10 @@ def inject_styles() -> None:
             font-size: 14px;
             color: #475569;
             line-height: 1.5;
+        }
+        .response-empty {
+            border-style: dashed;
+            background: #FAFBFC;
         }
         .issue-row {
             border: 1px solid #E8EEF5;
@@ -395,7 +453,10 @@ def render_header() -> None:
         """
         <div class="header-card">
             <div class="header-row">
-                <div class="page-title">Dell VeriPrompt</div>
+                <div>
+                    <div class="welcome-mark">Welcome, Ade!</div>
+                    <div class="header-brand">Dell VeriPrompt</div>
+                </div>
                 <div class="status-chip">Monitoring Active</div>
             </div>
         </div>
@@ -446,21 +507,25 @@ def render_client_profile(client: dict, client_products: pd.DataFrame) -> None:
 
 
 def render_response_monitor(prompt_slice: pd.DataFrame) -> None:
-    blocks: list[str] = []
+    st.markdown('<div class="section-title">AI Response Monitor</div>', unsafe_allow_html=True)
     for _, row in prompt_slice.iterrows():
-        product = resolve_primary_product(row) or "Not surfaced"
+        product = resolve_primary_product(row)
         rank = int(row.get("rank_position", 0) or 0)
-        rank_label = "Not ranked" if rank == 0 else f"Rank {rank}"
-        blocks.append(
+        is_surfaced = bool(product) and rank > 0
+        rank_label = f"Rank {rank}" if rank > 0 else "No ranked result"
+        product_label = product if product else "Capital One not surfaced"
+        summary = short_response_summary(row.get("response_text", "")) if is_surfaced else "No monitored Capital One product was surfaced in this response set."
+        classes = "response-item" if is_surfaced else "response-item response-empty"
+        st.markdown(
             f"""
-            <div class="response-item">
+            <div class="{classes}">
                 <div class="response-name">{row.get('assistant_name', 'Assistant')}</div>
-                <div class="response-meta">{product} | {rank_label}</div>
-                <div class="response-summary">{short_response_summary(row.get('response_text', ''))}</div>
+                <div class="response-meta">{product_label} | {rank_label}</div>
+                <div class="response-summary">{summary}</div>
             </div>
-            """
+            """,
+            unsafe_allow_html=True,
         )
-    st.markdown(f'<div class="vp-card"><div class="section-title">AI Response Monitor</div>{"".join(blocks)}</div>', unsafe_allow_html=True)
 
 
 def build_issue_rows(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame) -> list[dict]:
@@ -546,24 +611,26 @@ def render_accuracy_card(prompt_slice: pd.DataFrame, verified_products: pd.DataF
 
 def render_score_tracking(scorecards: dict[str, float]) -> None:
     metrics = [
-        ("AI Visibility Score", scorecards["AI Visibility Score"], "Selected context"),
-        ("Accuracy Score", scorecards["Accuracy Score"], "Verified alignment"),
-        ("Trust Score", scorecards["Trust Score"], "Risk control"),
-        ("AI Discovery Score", scorecards["AI Discovery Score"], "Combined score"),
+        ("AI Visibility Score", scorecards["AI Visibility Score"], "Primary", "metric-primary", "Prompt presence and rank"),
+        ("Accuracy Score", scorecards["Accuracy Score"], "Verified", "metric-accuracy", "Claim alignment"),
+        ("Trust Score", scorecards["Trust Score"], "Risk", "metric-trust", "Misinformation exposure"),
+        ("AI Discovery Score", scorecards["AI Discovery Score"], "Priority", "metric-discovery", "Combined operating signal"),
     ]
     metric_html = "".join(
         [
             f"""
-            <div class="metric-cell">
+            <div class="metric-cell {metric_class}">
                 <div class="card-label">{label}</div>
+                <div class="metric-pill">{pill}</div>
                 <div class="metric-value">{value:.1f}</div>
                 <div class="metric-sub">{sub}</div>
+                <div class="metric-secondary">{'Monitoring strong' if value >= 75 else 'Needs focus' if value < 65 else 'Stable'}</div>
             </div>
             """
-            for label, value, sub in metrics
+            for label, value, pill, metric_class, sub in metrics
         ]
     )
-    st.markdown(f'<div class="vp-card"><div class="section-title">Score Tracking</div><div class="metric-grid">{metric_html}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-title">Score Tracking</div><div class="metric-grid">{metric_html}</div>', unsafe_allow_html=True)
 
 
 def build_signal_breakdown(scored: pd.DataFrame) -> list[tuple[str, float]]:
@@ -622,7 +689,7 @@ def render_gateway_status(ingestion: dict, gateway_actions: pd.DataFrame) -> Non
 
 
 def render_competitor_analysis(benchmark: pd.DataFrame) -> None:
-    st.markdown('<div class="vp-card"><div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
     st.dataframe(
         benchmark[["brand", "appearance_frequency", "average_rank_position", "share_of_recommendations"]].rename(
             columns={
@@ -635,7 +702,6 @@ def render_competitor_analysis(benchmark: pd.DataFrame) -> None:
         use_container_width=True,
         hide_index=True,
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_reporting_summary(monthly_report: dict, quarterly_report: dict) -> None:
@@ -682,9 +748,8 @@ def main() -> None:
 
     control_cols = st.columns(4, gap="large")
     with control_cols[0]:
-        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
-        selected_client_name = st.selectbox("Client Selector", client_names, index=0)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            selected_client_name = st.selectbox("Client Selector", client_names, index=0)
 
     selected_client = next(client for client in clients if client["client_name"] == selected_client_name)
     client_products = verified_products[verified_products["client_id"] == selected_client["client_id"]].copy()
@@ -692,29 +757,25 @@ def main() -> None:
     latest_monitor_timestamp = gateway_actions.iloc[0]["timestamp"] if not gateway_actions.empty else selected_client["last_updated"]
 
     with control_cols[1]:
-        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
-        selected_industry = st.selectbox("Industry Filter", industries, index=industries.index(selected_client["industry"]))
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            selected_industry = st.selectbox("Industry Filter", industries, index=industries.index(selected_client["industry"]))
 
     with control_cols[2]:
-        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
-        selected_platforms = st.multiselect("AI Platforms", assistant_options, default=assistant_options)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            selected_platforms = st.multiselect("AI Platforms", assistant_options, default=assistant_options)
 
     with control_cols[3]:
-        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
-        render_monitoring_status(latest_monitor_timestamp)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            render_monitoring_status(latest_monitor_timestamp)
 
     prompt_col, profile_col = st.columns([0.58, 0.42], gap="large")
     with prompt_col:
-        st.markdown('<div class="vp-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Prompt Control</div>', unsafe_allow_html=True)
-        selected_category = st.selectbox("Prompt Category", category_options, index=0)
-        prompt_options = prompts[prompts["category"] == selected_category]["prompt_text"].tolist()
-        selected_prompt = st.selectbox("Prompt", prompt_options, index=0 if prompt_options else None)
-        run_analysis = st.button("Run Monitoring Analysis")
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="section-title">Prompt Control</div>', unsafe_allow_html=True)
+            selected_category = st.selectbox("Prompt Category", category_options, index=0)
+            prompt_options = prompts[prompts["category"] == selected_category]["prompt_text"].tolist()
+            selected_prompt = st.selectbox("Prompt", prompt_options, index=0 if prompt_options else None)
+            run_analysis = st.button("Run Monitoring Analysis")
 
     with profile_col:
         render_client_profile(selected_client, client_products)
@@ -749,13 +810,15 @@ def main() -> None:
 
     response_col, audit_col = st.columns([0.58, 0.42], gap="large")
     with response_col:
-        render_response_monitor(prompt_slice)
+        with st.container(border=True):
+            render_response_monitor(prompt_slice)
     with audit_col:
         render_accuracy_card(prompt_slice, client_products)
 
     score_col, signal_col = st.columns([0.58, 0.42], gap="large")
     with score_col:
-        render_score_tracking(scorecards)
+        with st.container(border=True):
+            render_score_tracking(scorecards)
     with signal_col:
         render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
 
@@ -763,7 +826,8 @@ def main() -> None:
     with gateway_col:
         render_gateway_status(ingestion, gateway_actions)
     with competitor_col:
-        render_competitor_analysis(benchmark)
+        with st.container(border=True):
+            render_competitor_analysis(benchmark)
 
     render_reporting_summary(monthly_report, quarterly_report)
 
