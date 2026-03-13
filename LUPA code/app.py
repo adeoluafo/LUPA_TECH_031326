@@ -30,11 +30,11 @@ def inject_styles() -> None:
         """
         <style>
         .block-container {
-            max-width: 1400px;
+            max-width: 1600px;
             padding-top: 24px;
-            padding-left: 32px;
-            padding-right: 32px;
-            padding-bottom: 32px;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 24px;
         }
         .stApp { background: #F4F7FB; }
         header[data-testid="stHeader"] { background: transparent; }
@@ -55,6 +55,12 @@ def inject_styles() -> None:
             margin-bottom: 24px;
         }
         .open-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .open-header-copy {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -82,7 +88,10 @@ def inject_styles() -> None:
             border: 1px solid #D9E2EC;
             border-radius: 20px;
             box-shadow: 0 10px 24px rgba(7, 28, 60, 0.05);
-            padding: 18px 20px 20px 20px;
+            padding: 20px 22px;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            gap: 0.5rem;
         }
         .section-title {
             font-family: "Libre Baskerville", Georgia, serif;
@@ -332,6 +341,23 @@ def inject_styles() -> None:
             background: #FFFFFF;
             padding: 14px;
         }
+        .report-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 18px;
+        }
+        .report-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #D9E2EC;
+            background: #0B63CE;
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 600;
+        }
         .placeholder-card {
             background: #FFFFFF;
             border: 1px dashed #D9E2EC;
@@ -386,6 +412,137 @@ def inject_styles() -> None:
             font-size: 14px;
             color: #64748B;
             margin-top: 6px;
+        }
+        .native-metric-card {
+            border: 1px solid #E8EEF5;
+            border-radius: 16px;
+            padding: 18px;
+            min-height: 168px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%);
+            box-shadow: 0 6px 18px rgba(7, 28, 60, 0.04);
+            position: relative;
+        }
+        .native-metric-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 5px;
+            border-radius: 16px 16px 0 0;
+            background: #D9E2EC;
+        }
+        .metric-visibility::before { background: #0B63CE; }
+        .metric-accuracy-card::before { background: #138A36; }
+        .metric-trust-card::before { background: #C47F00; }
+        .metric-discovery-card::before { background: #071C3C; }
+        .metric-label-native {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748B;
+            margin-bottom: 10px;
+        }
+        .metric-value-native {
+            font-family: "Libre Baskerville", Georgia, serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: #0A2A66;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .metric-context {
+            font-size: 15px;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+        .metric-status {
+            font-size: 13px;
+            color: #64748B;
+        }
+        .signal-native-row {
+            padding: 14px 0 2px 0;
+        }
+        .signal-native-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .signal-native-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0F172A;
+        }
+        .signal-native-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0A2A66;
+        }
+        .issue-native-card {
+            border: 1px solid #E8EEF5;
+            border-left: 4px solid #C47F00;
+            border-radius: 16px;
+            padding: 16px;
+            background: #FFFCF5;
+        }
+        .issue-native-card.critical {
+            border-left-color: #B42318;
+            background: #FFF7F5;
+        }
+        .issue-native-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 10px;
+        }
+        .issue-native-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748B;
+            margin-bottom: 6px;
+        }
+        .issue-native-value {
+            font-size: 15px;
+            color: #475569;
+        }
+        .gateway-green {
+            background: linear-gradient(180deg, #F7FCF8 0%, #FFFFFF 100%);
+            border: 1px solid rgba(19, 138, 54, 0.24);
+            border-top: 5px solid #138A36;
+            border-radius: 20px;
+            box-shadow: 0 10px 24px rgba(19, 138, 54, 0.06);
+            padding: 20px 22px;
+            margin-top: 16px;
+        }
+        .gateway-checklist {
+            display: grid;
+            gap: 10px;
+            margin: 14px 0 18px 0;
+        }
+        .gateway-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            color: #1F3B2D;
+        }
+        .gateway-check-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 999px;
+            background: rgba(19, 138, 54, 0.12);
+            color: #138A36;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex: 0 0 auto;
         }
         .stDataFrame {
             border: 1px solid #E8EEF5;
@@ -456,8 +613,10 @@ def render_header() -> None:
         """
         <div class="open-header">
             <div class="open-header-row">
-                <div class="welcome-mark">Welcome, Ade</div>
-                <div class="header-brand">Dell VeriPrompt</div>
+                <div class="open-header-copy">
+                    <div class="welcome-mark">Welcome, Ade!</div>
+                    <div class="header-brand">Dell VeriPrompt</div>
+                </div>
             </div>
         </div>
         """,
@@ -585,46 +744,39 @@ def build_issue_rows(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame
 
 def render_accuracy_card(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame) -> None:
     issues = build_issue_rows(prompt_slice, verified_products)
-    if not issues:
-        content = """
-        <div class="issue-row" style="border-left-color:#138A36;background:#F6FBF7;">
-            <div class="issue-head">
-                <div>
-                    <div class="issue-assistant">Verification</div>
-                    <div class="issue-title">No issues detected for the selected response set</div>
-                </div>
-                <div class="severity-badge" style="background:rgba(19,138,54,0.10);color:#138A36;border-color:rgba(19,138,54,0.18);">Clear</div>
-            </div>
-        </div>
-        """
-    else:
-        rows: list[str] = []
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Accuracy and Hallucination Detection</div>', unsafe_allow_html=True)
+        if not issues:
+            st.success("No issues detected for the selected response set.")
+            return
+
         for issue in issues[:6]:
-            rows.append(
+            severity_class = "critical" if issue["critical"] else ""
+            badge_class = "severity-badge critical" if issue["critical"] else "severity-badge"
+            st.markdown(
                 f"""
-                <div class="issue-row {'critical' if issue['critical'] else ''}">
+                <div class="issue-native-card {severity_class}">
                     <div class="issue-head">
                         <div>
                             <div class="issue-assistant">{issue['assistant']}</div>
-                            <div class="issue-title">{issue['title']}</div>
+                            <div class="issue-native-title">{issue['title']}</div>
                         </div>
-                        <div class="severity-badge {'critical' if issue['critical'] else ''}">{issue['severity']}</div>
+                        <div class="{badge_class}">{issue['severity']}</div>
                     </div>
                     <div class="issue-grid">
                         <div class="issue-box">
-                            <div class="card-label">AI Response</div>
-                            <div class="profile-value">{issue['observed']}</div>
+                            <div class="issue-native-label">AI Response</div>
+                            <div class="issue-native-value">{issue['observed']}</div>
                         </div>
                         <div class="issue-box">
-                            <div class="card-label">Verified</div>
-                            <div class="profile-value">{issue['expected']}</div>
+                            <div class="issue-native-label">Verified</div>
+                            <div class="issue-native-value">{issue['expected']}</div>
                         </div>
                     </div>
                 </div>
-                """
+                """,
+                unsafe_allow_html=True,
             )
-        content = "".join(rows)
-    st.markdown(f'<div class="vp-card"><div class="section-title">Accuracy and Hallucination Detection</div>{content}</div>', unsafe_allow_html=True)
 
 
 def render_score_tracking(scorecards: dict[str, float]) -> None:
@@ -638,21 +790,33 @@ def render_score_tracking(scorecards: dict[str, float]) -> None:
         ("Trust Score", trust, "Risk", "metric-trust", "Misinformation exposure"),
         ("AI Discovery Score", discovery, "Priority", "metric-discovery", "Combined operating signal"),
     ]
-    metric_html = "".join(
-        [
-            f"""
-            <div class="metric-cell {metric_class}">
-                <div class="card-label">{label}</div>
-                <div class="metric-pill">{pill}</div>
-                <div class="metric-value">{value:.1f}</div>
-                <div class="metric-sub">{sub}</div>
-                <div class="metric-secondary">{'Monitoring strong' if value >= 75 else 'Needs focus' if value < 65 else 'Stable trajectory'}</div>
-            </div>
-            """
-            for label, value, pill, metric_class, sub in metrics
-        ]
-    )
-    st.markdown(f'<div class="section-title">Score Tracking</div><div class="metric-grid">{metric_html}</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Score Tracking</div>', unsafe_allow_html=True)
+        row_one = st.columns(2, gap="medium")
+        row_two = st.columns(2, gap="medium")
+        card_columns = [row_one[0], row_one[1], row_two[0], row_two[1]]
+
+        for column, (label, value, pill, metric_class, sub) in zip(card_columns, metrics):
+            with column:
+                status_text = "Monitoring strong" if value >= 75 else "Needs focus" if value < 65 else "Stable trajectory"
+                metric_variant = {
+                    "metric-primary": "metric-visibility",
+                    "metric-accuracy": "metric-accuracy-card",
+                    "metric-trust": "metric-trust-card",
+                    "metric-discovery": "metric-discovery-card",
+                }.get(metric_class, "")
+                st.markdown(
+                    f"""
+                    <div class="native-metric-card {metric_variant}">
+                        <div class="metric-label-native">{label}</div>
+                        <div class="metric-pill">{pill}</div>
+                        <div class="metric-value-native">{value:.1f}</div>
+                        <div class="metric-context">{sub}</div>
+                        <div class="metric-status">{status_text}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 
 def build_signal_breakdown(scored: pd.DataFrame) -> list[tuple[str, float]]:
@@ -682,30 +846,40 @@ def build_signal_breakdown(scored: pd.DataFrame) -> list[tuple[str, float]]:
 
 def render_signal_diagnostics(filtered: pd.DataFrame) -> None:
     rows = build_signal_breakdown(filtered)
-    signal_html = "".join(
-        [
-            f"""
-            <div class="signal-row">
-                <div class="signal-top"><span>{label}</span><span>{value:.1f}%</span></div>
-                <div class="signal-bar"><div class="signal-fill" style="width:{value}%;"></div></div>
-            </div>
-            """
-            for label, value in rows
-        ]
-    )
-    st.markdown(
-        f'<div class="vp-card"><div class="section-title">Signal Diagnostics</div>{signal_html}<div class="signal-muted">Modeled influence mix for the selected monitoring context</div></div>',
-        unsafe_allow_html=True,
-    )
+    with st.container(border=True):
+        st.markdown('<div class="section-title">Signal Diagnostics</div>', unsafe_allow_html=True)
+        for label, value in rows:
+            st.markdown(
+                f"""
+                <div class="signal-native-row">
+                    <div class="signal-native-head">
+                        <div class="signal-native-label">{label}</div>
+                        <div class="signal-native-value">{value:.1f}%</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.progress(min(max(value / 100, 0.0), 1.0))
+        st.markdown('<div class="signal-muted">Modeled influence mix for the selected monitoring context</div>', unsafe_allow_html=True)
 
 
 def render_gateway_status(ingestion: dict, gateway_actions: pd.DataFrame) -> None:
     rewards_update = gateway_actions[gateway_actions["action_title"].str.contains("rewards schema", case=False, na=False)]
     rewards_update_label = relative_day_text(rewards_update.iloc[0]["timestamp"]) if not rewards_update.empty else "Current"
-    action_list = "".join([f"<li>{action}</li>" for action in gateway_actions["action_title"].head(3).tolist()])
+    checklist_items = [
+        "Verified data ingested",
+        "Rewards schema normalized",
+        "Annual fee metadata updated",
+        "Comparison fields refreshed",
+        "Distribution sync current",
+    ]
+    action_list = "".join(
+        [f'<div class="gateway-check"><span class="gateway-check-icon">&#10003;</span><span>{item}</span></div>' for item in checklist_items]
+    )
     st.markdown(
         f"""
-        <div class="vp-card">
+        <div class="gateway-green">
             <div class="section-title">Gateway Data Status</div>
             <div class="profile-grid">
                 <div class="profile-label">Data Ingestion</div><div class="profile-value">{'Active' if ingestion.get('validation_passed', False) else ingestion.get('ingestion_status', 'Current')}</div>
@@ -713,7 +887,7 @@ def render_gateway_status(ingestion: dict, gateway_actions: pd.DataFrame) -> Non
                 <div class="profile-label">Distribution Status</div><div class="profile-value">Synced</div>
                 <div class="profile-label">Last Structured Rewards Schema Update</div><div class="profile-value">{rewards_update_label}</div>
             </div>
-            <ul class="gateway-list">{action_list}</ul>
+            <div class="gateway-checklist">{action_list}</div>
             <div class="secondary-action">View All Gateway Actions</div>
         </div>
         """,
@@ -722,19 +896,17 @@ def render_gateway_status(ingestion: dict, gateway_actions: pd.DataFrame) -> Non
 
 
 def render_competitor_analysis(benchmark: pd.DataFrame) -> None:
-    st.markdown('<div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
-    st.dataframe(
-        benchmark[["brand", "appearance_frequency", "average_rank_position", "share_of_recommendations"]].rename(
-            columns={
-                "brand": "Brand",
-                "appearance_frequency": "Appearance Frequency",
-                "average_rank_position": "Avg. Rank",
-                "share_of_recommendations": "Share of AI Recommendations",
-            }
-        ),
-        use_container_width=True,
-        hide_index=True,
+    display_benchmark = pd.DataFrame(
+        [
+            {"Brand": "Chase", "Appearance Frequency": "84%", "Avg. Rank": "1.7", "Share of AI Recommendations": "29%"},
+            {"Brand": "Amex", "Appearance Frequency": "78%", "Avg. Rank": "2.0", "Share of AI Recommendations": "25%"},
+            {"Brand": "Capital One", "Appearance Frequency": "72%", "Avg. Rank": "2.1", "Share of AI Recommendations": "24%"},
+            {"Brand": "Discover", "Appearance Frequency": "49%", "Avg. Rank": "3.2", "Share of AI Recommendations": "12%"},
+            {"Brand": "Bank of America", "Appearance Frequency": "43%", "Avg. Rank": "3.5", "Share of AI Recommendations": "10%"},
+        ]
     )
+    st.markdown('<div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
+    st.dataframe(display_benchmark, use_container_width=True, hide_index=True)
 
 
 def render_reporting_summary(monthly_report: dict, quarterly_report: dict) -> None:
@@ -769,6 +941,9 @@ def render_reporting_summary(monthly_report: dict, quarterly_report: dict) -> No
                         <div class="report-item"><div class="card-label">Forecast Note</div><div class="profile-value">Continue prioritizing prompts where verified metadata can improve ranking and trust outcomes.</div></div>
                     </div>
                 </div>
+            </div>
+            <div class="report-footer">
+                <div class="report-button"><span>&#8681;</span><span>Download Report</span></div>
             </div>
         </div>
         """,
@@ -859,11 +1034,9 @@ def main() -> None:
 
     score_col, signal_col = st.columns([0.58, 0.42], gap="large")
     with score_col:
-        with st.container(border=True):
-            render_score_tracking(scorecards)
+        render_score_tracking(scorecards)
     with signal_col:
-        with st.container(border=True):
-            render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
+        render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
 
     with st.container(border=True):
         render_competitor_analysis(benchmark)
