@@ -41,68 +41,39 @@ def inject_styles() -> None:
         [data-testid="stToolbar"] { visibility: hidden; height: 0; position: absolute; }
         [data-testid="stDecoration"] { display: none; }
         html, body, [class*="css"] {
-            font-family: Inter, "Segoe UI", system-ui, sans-serif;
+            font-family: "IBM Plex Sans", "Source Sans 3", "Segoe UI", sans-serif;
             color: #0F172A;
         }
-        .header-card, .vp-card, .vp-control-card {
+        .vp-card, .vp-control-card {
             background: #FFFFFF;
             border: 1px solid #D9E2EC;
             border-radius: 20px;
             box-shadow: 0 10px 24px rgba(7, 28, 60, 0.06);
         }
-        .header-card {
-            padding: 26px 28px;
+        .open-header {
+            padding: 8px 2px 12px 2px;
             margin-bottom: 24px;
-            background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);
         }
-        .header-row {
+        .open-header-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
         }
         .welcome-mark {
-            font-size: 36px;
+            font-family: "Libre Baskerville", Georgia, serif;
+            font-size: 44px;
             font-weight: 600;
             color: #0F172A;
             line-height: 1.05;
-            margin-bottom: 10px;
+            margin-bottom: 2px;
             letter-spacing: -0.02em;
         }
         .header-brand {
-            font-size: 28px;
+            font-family: "Libre Baskerville", Georgia, serif;
+            font-size: 30px;
             font-weight: 700;
             color: #071C3C;
-        }
-        .header-status {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            min-width: 360px;
-        }
-        .status-chip {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            padding: 12px 14px;
-            background: #FFFFFF;
-            border: 1px solid #D9E2EC;
-            border-radius: 14px;
-        }
-        .status-chip-label {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #64748B;
-        }
-        .status-chip-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0F172A;
-        }
-        .status-chip.active .status-chip-value {
-            color: #138A36;
         }
         .vp-control-card { padding: 18px 18px 16px 18px; min-height: 148px; }
         .vp-card { padding: 18px 20px 20px 20px; }
@@ -114,6 +85,7 @@ def inject_styles() -> None:
             padding: 18px 20px 20px 20px;
         }
         .section-title {
+            font-family: "Libre Baskerville", Georgia, serif;
             font-size: 21px;
             font-weight: 600;
             color: #0F172A;
@@ -198,6 +170,7 @@ def inject_styles() -> None:
             color: #0A2A66;
         }
         .metric-value {
+            font-family: "Libre Baskerville", Georgia, serif;
             font-size: 40px;
             font-weight: 700;
             color: #0A2A66;
@@ -481,26 +454,10 @@ def relative_day_text(timestamp: str) -> str:
 def render_header() -> None:
     st.markdown(
         """
-        <div class="header-card">
-            <div class="header-row">
-                <div>
-                    <div class="welcome-mark">Welcome, Ade!</div>
-                    <div class="header-brand">Dell VeriPrompt</div>
-                </div>
-                <div class="header-status">
-                    <div class="status-chip active">
-                        <div class="status-chip-label">Status</div>
-                        <div class="status-chip-value">Monitoring Active</div>
-                    </div>
-                    <div class="status-chip">
-                        <div class="status-chip-label">Cycle</div>
-                        <div class="status-chip-value">Daily</div>
-                    </div>
-                    <div class="status-chip">
-                        <div class="status-chip-label">Gateway</div>
-                        <div class="status-chip-value">Current</div>
-                    </div>
-                </div>
+        <div class="open-header">
+            <div class="open-header-row">
+                <div class="welcome-mark">Welcome, Ade</div>
+                <div class="header-brand">Dell VeriPrompt</div>
             </div>
         </div>
         """,
@@ -905,15 +862,14 @@ def main() -> None:
         with st.container(border=True):
             render_score_tracking(scorecards)
     with signal_col:
-        render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
-
-    gateway_col, competitor_col = st.columns([0.58, 0.42], gap="large")
-    with gateway_col:
-        render_gateway_status(ingestion, gateway_actions)
-    with competitor_col:
         with st.container(border=True):
-            render_competitor_analysis(benchmark)
+            render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
 
+    with st.container(border=True):
+        render_competitor_analysis(benchmark)
+
+    with st.container():
+        render_gateway_status(ingestion, gateway_actions)
     render_reporting_summary(monthly_report, quarterly_report)
 
 
