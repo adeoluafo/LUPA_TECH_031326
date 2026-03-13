@@ -60,9 +60,9 @@ On the GitHub repository page:
 2. Select **Download ZIP**.
 3. Extract the ZIP file.
 
-Open the extracted project folder.
+Open the extracted project folder, then open "LUPA Code,"
 
-You should see files such as:
+From there, you should see files such as:
 
 ```
 app.py
@@ -126,7 +126,7 @@ Use the `cd` command to move into the project directory.
 Example:
 
 ```
-cd ~/Downloads/dell-veriprompt-prototype
+cd ~/Downloads/LUPA_TECH_031326/LUPA Code
 ```
 
 ---
