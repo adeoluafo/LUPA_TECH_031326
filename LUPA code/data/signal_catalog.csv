@@ -1,0 +1,6 @@
+signal_type,influence_score,confidence,summary,analyst_action
+comparison articles,86,0.84,"Long-form comparison content appears to shape ranking order and shortlist composition.","Expand structured comparison tables and update side-by-side fee and rewards coverage."
+financial review sites,78,0.76,"Review summaries appear to influence repeated fee and bonus phrasing, including some inaccuracies.","Refresh fee and bonus metadata across authoritative review-style content."
+rewards summaries,73,0.72,"Condensed rewards descriptions seem to drive shorthand rewards-rate claims.","Standardize rewards language into machine-readable snippets."
+structured product tables,89,0.88,"Structured fields correlate with stronger product matching and more accurate factual claims.","Prioritize publishing normalized schema updates through the gateway layer."
+product pages,81,0.8,"Official product-page style language appears to support product identification and eligibility framing.","Strengthen page-level consistency for audience and fee attributes."

@@ -1,0 +1,11 @@
+prompt_id,category,prompt_text,priority
+P01,Small Business,best credit cards for small businesses,High
+P02,Small Business,best business credit cards with no annual fee,Medium
+P03,Student,best student credit cards,High
+P04,Student,best student credit cards for cashback,Medium
+P05,Travel,best travel rewards credit cards,High
+P06,Travel,best no foreign transaction fee credit cards for travel,Medium
+P07,Cashback,best cashback credit cards,High
+P08,Cashback,best no annual fee credit cards,High
+P09,General,best rewards cards for young professionals,Medium
+P10,General,best starter credit cards with perks,Medium

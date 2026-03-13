@@ -1,0 +1,19 @@
+[
+  {
+    "client_id": "capital_one",
+    "client_name": "Capital One",
+    "industry": "Financial Services",
+    "account_owner": "Dell Financial Services Strategy",
+    "region": "North America",
+    "coverage": "AI-assisted shopping and recommendation monitoring",
+    "last_updated": "2026-03-12",
+    "ingestion_status": "Validated",
+    "gateway_layer_active": true,
+    "priority_objectives": [
+      "Improve Capital One visibility in AI-generated credit card recommendations",
+      "Reduce hallucinated product facts in assistant responses",
+      "Increase adoption of verified structured card metadata through the gateway layer"
+    ],
+    "analyst_notes": "Prototype account focused on credit card recommendation prompts relevant to student, travel, cashback, and small-business segments."
+  }
+]

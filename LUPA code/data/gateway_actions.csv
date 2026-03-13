@@ -1,0 +1,5 @@
+timestamp,action_type,action_title,product_scope,status,distribution_status,analyst_owner,impact_summary
+2026-03-12 09:15,publish,Standardized rewards schema published,All Capital One monitored cards,Published,Distributed to schema registry and analyst cache,Dell Gateway Ops,"Reduced reward-rate ambiguity across business and student card records."
+2026-03-11 14:40,metadata_update,Annual fee metadata updated,Spark Cash; Spark Miles; Savor Student,Published,Distributed to comparison payload targets,Dell Gateway Ops,"Corrected conflicting annual-fee markers used in modeled assistant summaries."
+2026-03-10 11:05,normalization,Student credit card comparison fields normalized,Quicksilver Student Rewards; Savor Student,Published,Distributed to comparison payload targets,Dell Data Standards,"Aligned student bonus and intro APR fields across downstream payloads."
+2026-03-09 16:20,transform,Machine-readable comparison attributes created,All Capital One monitored cards,Published,Distributed to structured comparison payloads,Dell Data Standards,"Created normalized audience, category, fee, and rewards attributes for AI-friendly retrieval."
