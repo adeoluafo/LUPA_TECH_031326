@@ -1,6 +1,6 @@
 # Dell VeriPrompt
 
-Dell VeriPrompt is an AI Discovery Intelligence and Optimization platform that helps companies monitor how their products appear in AI-assisted shopping responses across platforms such as ChatGPT, Gemini, and Perplexity.
+Dell VeriPrompt is an AI Product Representation Intelligence platform that helps companies monitor how their products appear in AI-assisted shopping responses across platforms such as ChatGPT, Gemini, and Perplexity.
 
 As AI assistants increasingly act as the entry point for product discovery, companies face two major risks:
 
@@ -48,35 +48,48 @@ The prototype uses **Capital One credit cards** as the example client scenario.
 
 # Running the Application
 
-## Windows (Fastest Method)
-
-### Step 1 — Extract the ZIP File
-
-Download the ZIP submission and extract it.
-
-Open the extracted project folder and navigate to the "LUPA code" folder
-
-In there, you should see files such as:
-
-- `app.py`
-- `requirements.txt`
-- `README.md`
-- `run_app.bat`
+These steps explain how to run the Dell VeriPrompt prototype locally from the GitHub repository.
 
 ---
 
+## Step 1 — Download the Repository
+
+On the GitHub repository page:
+
+1. Click the green **Code** button.
+2. Select **Download ZIP**.
+3. Extract the ZIP file.
+
+Open the extracted project folder.
+
+You should see files such as:
+
+```
+app.py
+requirements.txt
+run_app.bat
+README.md
+modules/
+data/
+utils/
+```
+
+---
+
+# Windows Instructions
+
 ### Step 2 — Launch the Application
 
-Simply **double-click the file**:
+Inside the project folder, **double click the file**:
 
 ```
 run_app.bat
 ```
 
-The launcher will:
+This launcher will automatically:
 
-1. Install required Python packages
-2. Start the Dell VeriPrompt application
+- install required Python packages
+- start the Dell VeriPrompt dashboard
 
 ---
 
@@ -85,64 +98,75 @@ The launcher will:
 After the application starts, open this address in your browser:
 
 ```
-http://127.0.0.1:8503/
+http://127.0.0.1:8503
 ```
 
 ---
 
 # Mac Instructions
 
-### Step 1 — Check Python
+Mac users will run the application using Terminal.
+
+---
+
+### Step 2 — Check Python
 
 Open **Terminal** and run:
 
-```bash
+```
 python3 --version
 ```
 
-If Python is installed, continue to the next step.
-
 ---
 
-### Step 2 — Navigate to the Project Folder
+### Step 3 — Navigate to the Project Folder
 
-In Terminal, move into the extracted project folder.
+Use the `cd` command to move into the project directory.
 
 Example:
 
-```bash
-cd ~/Downloads/LUPA_Tech_031326/LUPA code
+```
+cd ~/Downloads/dell-veriprompt-prototype
 ```
 
 ---
 
-### Step 3 — Install Dependencies
+### Step 4 — Install Dependencies
 
 Run:
 
-```bash
+```
 python3 -m pip install -r requirements.txt
 ```
 
 ---
 
-### Step 4 — Launch the Application
+### Step 5 — Start the Application
 
 Run:
 
-```bash
+```
 python3 -m streamlit run app.py --server.port 8503
 ```
 
 ---
 
-### Step 5 — Open the Dashboard
+### Step 6 — Open the Dashboard
 
 Open this address in your browser:
 
 ```
-http://127.0.0.1:8503/
+http://127.0.0.1:8503
 ```
+
+---
+
+# How to Tell the Application Started Successfully
+
+The application started successfully when:
+
+- the terminal displays a Streamlit server message
+- opening the URL loads the **Dell VeriPrompt dashboard**
 
 ---
 
@@ -163,21 +187,6 @@ http://127.0.0.1:8503/
 - Reporting Summary
 
 These sections demonstrate how Dell VeriPrompt analyzes AI-generated product discovery results.
-
----
-
-# How to Tell the Application Started Successfully
-
-The application started successfully when:
-
-- the terminal or launcher displays a Streamlit server message
-- opening the local URL loads the **Dell VeriPrompt dashboard**
-
-Expected address:
-
-```
-http://127.0.0.1:8503/
-```
 
 ---
 
