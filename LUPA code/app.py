@@ -3,230 +3,333 @@ from __future__ import annotations
 from datetime import datetime
 
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
-from modules.data_gateway import build_gateway_payload_preview, build_gateway_status, build_ingestion_status
+from modules.data_gateway import build_ingestion_status
 from modules.diagnostics import build_competitor_benchmark, build_signal_diagnostics
 from modules.recommendations import generate_recommendations
-from modules.reporting import build_reporting_payloads, quarterly_trends
+from modules.reporting import build_reporting_payloads
 from modules.scoring import aggregate_scorecards, score_responses
-from modules.security_status import build_security_status_frame
 from modules.verification import verify_response
-from utils.helpers import ASSISTANT_COLORS, safe_mean
 from utils.loaders import (
     load_clients,
     load_gateway_actions,
     load_historical_trends,
     load_mock_ai_responses,
     load_prompts,
-    load_security_status,
     load_signal_catalog,
     load_verified_products,
 )
 
 
-st.set_page_config(
-    page_title="Dell VeriPrompt",
-    page_icon="D",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+st.set_page_config(page_title="Dell VeriPrompt", page_icon="D", layout="wide", initial_sidebar_state="collapsed")
 
 
 def inject_styles() -> None:
     st.markdown(
         """
         <style>
-        :root {
-            --bg: #f4f7fa;
-            --panel: #ffffff;
-            --panel-alt: #f8fbfd;
-            --ink: #18293f;
-            --muted: #5f7188;
-            --line: #d6e0ea;
-            --accent: #006bbd;
-            --accent-soft: #eaf3fb;
-            --good: #0f8a5f;
-            --warn: #b7791f;
-            --bad: #b73a32;
+        .block-container {
+            max-width: 1400px;
+            padding-top: 24px;
+            padding-left: 32px;
+            padding-right: 32px;
+            padding-bottom: 32px;
         }
+        .stApp { background: #F4F7FB; }
+        header[data-testid="stHeader"] { background: transparent; }
+        [data-testid="stToolbar"] { visibility: hidden; height: 0; position: absolute; }
+        [data-testid="stDecoration"] { display: none; }
         html, body, [class*="css"] {
-            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-            color: var(--ink);
+            font-family: Inter, "Segoe UI", system-ui, sans-serif;
+            color: #0F172A;
         }
-        .stApp {
-            background: linear-gradient(180deg, #f3f6f9 0%, #eef3f8 100%);
-        }
-        [data-testid="stSidebar"] {
-            background: #0f2138;
-        }
-        [data-testid="stSidebar"] * {
-            color: #eef4fb;
-        }
-        .workspace-header {
-            background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
-            border: 1px solid var(--line);
-            border-radius: 20px;
-            padding: 18px 22px;
-            box-shadow: 0 8px 24px rgba(16, 35, 61, 0.05);
-            margin-bottom: 18px;
-        }
-        .workspace-header h1 {
-            margin: 0;
-            font-size: 1.85rem;
-            font-weight: 750;
-            color: var(--ink);
-        }
-        .workspace-header .subline {
-            margin-top: 8px;
-            color: var(--muted);
-            font-size: 0.94rem;
-        }
-        .panel {
-            background: rgba(255,255,255,0.98);
-            border: 1px solid var(--line);
+        .header-card, .vp-card, .vp-control-card {
+            background: #FFFFFF;
+            border: 1px solid #D9E2EC;
             border-radius: 18px;
-            padding: 16px 16px 12px 16px;
-            box-shadow: 0 8px 24px rgba(16, 35, 61, 0.05);
-            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
         }
-        .section-title {
-            font-size: 0.96rem;
-            font-weight: 750;
-            margin-bottom: 12px;
-            color: var(--ink);
-            letter-spacing: 0.01em;
-        }
-        .metric-card {
-            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            padding: 14px 16px;
-            min-height: 112px;
-        }
-        .metric-label {
-            color: var(--muted);
-            font-size: 0.82rem;
-            margin-bottom: 4px;
-        }
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--ink);
-            line-height: 1.1;
-        }
-        .metric-sub {
-            color: var(--muted);
-            font-size: 0.82rem;
-            margin-top: 4px;
-        }
-        .status-block {
-            background: var(--panel-alt);
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-        }
-        .status-label {
-            color: var(--muted);
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .status-value {
-            color: var(--ink);
-            font-size: 1rem;
-            font-weight: 700;
-            margin-top: 2px;
-        }
-        .chip {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            margin-right: 6px;
-            margin-bottom: 6px;
-            background: var(--accent-soft);
-            color: var(--accent);
-        }
-        .response-card {
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            background: #ffffff;
-        }
-        .response-head {
+        .header-card { padding: 20px; margin-bottom: 24px; }
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
+        }
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #0F172A;
+            line-height: 1.1;
+        }
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(19, 138, 54, 0.10);
+            color: #138A36;
+            border: 1px solid rgba(19, 138, 54, 0.18);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .vp-control-card { padding: 18px 18px 16px 18px; min-height: 148px; }
+        .vp-card { padding: 18px 20px 20px 20px; }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 16px;
+        }
+        .card-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748B;
+            margin-bottom: 8px;
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 132px 1fr;
+            gap: 8px 16px;
+            margin-bottom: 14px;
+        }
+        .profile-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748B;
+        }
+        .profile-value {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.45;
+        }
+        .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #F8FBFF;
+            border: 1px solid #D9E2EC;
+            color: #0A2A66;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .metric-cell {
+            background: #FFFFFF;
+            border: 1px solid #E8EEF5;
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0A2A66;
+            margin-bottom: 6px;
+        }
+        .metric-sub {
+            font-size: 13px;
+            color: #475569;
+        }
+        .response-item {
+            border: 1px solid #E8EEF5;
+            border-radius: 14px;
+            padding: 14px;
+            background: #FFFFFF;
+        }
+        .response-item + .response-item { margin-top: 12px; }
+        .response-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 4px;
+        }
+        .response-meta {
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 10px;
+        }
+        .response-summary {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+        }
+        .issue-row {
+            border: 1px solid #E8EEF5;
+            border-left: 4px solid #C47F00;
+            border-radius: 14px;
+            padding: 14px;
+            background: #FFFCF5;
+        }
+        .issue-row.critical {
+            border-left-color: #B42318;
+            background: #FFF7F5;
+        }
+        .issue-row + .issue-row { margin-top: 12px; }
+        .issue-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             gap: 12px;
             margin-bottom: 8px;
         }
-        .response-title {
-            font-weight: 750;
-            color: var(--ink);
-        }
-        .response-meta {
-            color: var(--muted);
-            font-size: 0.82rem;
-        }
-        .flag {
-            border-left: 4px solid var(--bad);
-            background: #fff7f6;
-            border-radius: 10px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-        }
-        .flag-title {
+        .issue-assistant {
+            font-size: 13px;
             font-weight: 700;
-            color: var(--bad);
-            margin-bottom: 4px;
+            color: #0F172A;
+            margin-bottom: 2px;
         }
-        .flag-body {
-            color: var(--ink);
-            font-size: 0.88rem;
+        .issue-title {
+            font-size: 14px;
+            color: #0F172A;
+            line-height: 1.45;
         }
-        .notice {
-            background: #f7fafc;
-            border: 1px dashed var(--line);
-            border-radius: 16px;
-            padding: 22px;
-            color: var(--muted);
+        .severity-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            background: rgba(196, 127, 0, 0.12);
+            color: #C47F00;
+            border: 1px solid rgba(196, 127, 0, 0.18);
+        }
+        .severity-badge.critical {
+            background: rgba(180, 35, 24, 0.10);
+            color: #B42318;
+            border-color: rgba(180, 35, 24, 0.18);
+        }
+        .issue-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .issue-box {
+            background: #FFFFFF;
+            border: 1px solid #E8EEF5;
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+        .signal-row { margin-bottom: 14px; }
+        .signal-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #475569;
+        }
+        .signal-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: #E8EEF5;
+            overflow: hidden;
+        }
+        .signal-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: #0A2A66;
+        }
+        .gateway-list {
+            margin: 14px 0 16px 0;
+            padding-left: 18px;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+        .gateway-list li + li { margin-top: 6px; }
+        .text-button {
+            color: #0B63CE;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .report-block-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 12px;
+        }
+        .report-list {
+            display: grid;
+            gap: 10px;
+        }
+        .report-item {
+            border: 1px solid #E8EEF5;
+            border-radius: 12px;
+            background: #FFFFFF;
+            padding: 12px;
+        }
+        .placeholder-card {
+            background: #FFFFFF;
+            border: 1px dashed #D9E2EC;
+            border-radius: 18px;
+            padding: 28px;
             text-align: center;
-            margin-top: 8px;
+            color: #475569;
+            font-size: 14px;
+            margin-top: 24px;
         }
-        .status-good { color: var(--good); font-weight: 700; }
-        .status-warn { color: var(--warn); font-weight: 700; }
-        .status-bad { color: var(--bad); font-weight: 700; }
         div[data-baseweb="select"] > div,
-        div[data-baseweb="select"] input,
-        div[data-baseweb="select"] span,
-        div[data-baseweb="input"] input,
-        .stMultiSelect [data-baseweb="tag"] span,
-        .stSelectbox label,
-        .stMultiSelect label,
-        .stTextInput label {
-            color: #18293f !important;
+        div[data-baseweb="input"] > div {
+            min-height: 46px !important;
+            border: 1px solid #D9E2EC !important;
+            background: #FFFFFF !important;
+            box-shadow: none !important;
+            border-radius: 12px !important;
         }
-        div[data-baseweb="select"] > div {
-            background: #ffffff !important;
-            border-color: #c7d4e1 !important;
+        div[data-baseweb="select"] span,
+        div[data-baseweb="select"] input,
+        div[data-baseweb="input"] input,
+        .stMultiSelect [data-baseweb="tag"] span {
+            color: #0F172A !important;
+            font-size: 14px !important;
+        }
+        .stMultiSelect [data-baseweb="tag"] {
+            border-radius: 999px !important;
+        }
+        label[data-testid="stWidgetLabel"] p {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase !important;
+            color: #64748B !important;
         }
         .stButton > button {
-            background: #006bbd;
-            color: #ffffff;
-            border: 1px solid #0060aa;
-            border-radius: 12px;
-            font-weight: 700;
-            padding: 0.55rem 1.1rem;
+            background: #0B63CE !important;
+            color: #FFFFFF !important;
+            border: 1px solid #0B63CE !important;
+            border-radius: 12px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            padding: 0.62rem 1.1rem !important;
+            box-shadow: none !important;
+            width: auto !important;
         }
         .stButton > button:hover {
-            background: #005ca3;
-            color: #ffffff;
+            background: #0A58B8 !important;
+            border-color: #0A58B8 !important;
+        }
+        .stDataFrame {
+            border: 1px solid #E8EEF5;
+            border-radius: 14px;
+            overflow: hidden;
         }
         </style>
         """,
@@ -235,7 +338,7 @@ def inject_styles() -> None:
 
 
 @st.cache_data
-def load_all_data() -> tuple[list[dict], pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
+def load_all_data() -> tuple[list[dict], pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     return (
         load_clients(),
         load_prompts(),
@@ -244,32 +347,6 @@ def load_all_data() -> tuple[list[dict], pd.DataFrame, pd.DataFrame, pd.DataFram
         load_gateway_actions(),
         load_historical_trends(),
         load_signal_catalog(),
-        load_security_status(),
-    )
-
-
-def metric_card(label: str, value: str, sub: str) -> None:
-    st.markdown(
-        f"""
-        <div class="metric-card">
-            <div class="metric-label">{label}</div>
-            <div class="metric-value">{value}</div>
-            <div class="metric-sub">{sub}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def status_block(label: str, value: str) -> None:
-    st.markdown(
-        f"""
-        <div class="status-block">
-            <div class="status-label">{label}</div>
-            <div class="status-value">{value}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
     )
 
 
@@ -280,158 +357,6 @@ def resolve_primary_product(row: pd.Series | dict) -> str:
         if hasattr(row, "index") and candidate in row.index:
             return str(row.get(candidate, "") or "")
     return ""
-
-
-def summarize_response(text: str) -> str:
-    if not isinstance(text, str) or not text.strip():
-        return ""
-    first_sentence = text.split(". ")[0].strip()
-    if not first_sentence.endswith("."):
-        first_sentence += "."
-    return first_sentence
-
-
-def relative_day_text(timestamp: str) -> str:
-    try:
-        delta = datetime(2026, 3, 13) - datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
-    except ValueError:
-        return "Current"
-    days = max(delta.days, 0)
-    if days == 0:
-        return "Today"
-    if days == 1:
-        return "1 day ago"
-    return f"{days} days ago"
-
-
-def build_signal_breakdown(scored: pd.DataFrame) -> pd.DataFrame:
-    label_map = {
-        "comparison articles": "Financial comparison articles",
-        "rewards summaries": "Rewards feature summaries",
-        "product pages": "Product pages",
-        "financial review sites": "Financial review sites",
-        "structured product tables": "Structured product tables",
-    }
-    counts = {label: 0 for label in label_map.values()}
-    for signal_mix in scored.get("modeled_signal_mix", pd.Series(dtype=str)).fillna(""):
-        for raw, label in label_map.items():
-            if raw in signal_mix.lower():
-                counts[label] += 1
-    frame = pd.DataFrame(
-        [{"signal": label, "count": count} for label, count in counts.items() if count > 0]
-    )
-    if frame.empty:
-        return pd.DataFrame(columns=["signal", "percentage"])
-    frame["percentage"] = (frame["count"] / frame["count"].sum() * 100).round(1)
-    return frame.sort_values("percentage", ascending=False)
-
-
-def signal_breakdown_chart(signal_breakdown: pd.DataFrame) -> go.Figure:
-    fig = px.bar(
-        signal_breakdown,
-        x="percentage",
-        y="signal",
-        orientation="h",
-        text="percentage",
-        color_discrete_sequence=["#006bbd"],
-    )
-    fig.update_traces(texttemplate="%{text:.1f}%", hovertemplate="%{y}: %{x:.1f}%<extra></extra>")
-    fig.update_layout(height=260, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-    fig.update_xaxes(title="", range=[0, 100])
-    fig.update_yaxes(title="", categoryorder="total ascending")
-    return fig
-
-
-def assistant_summary_chart(scored: pd.DataFrame) -> go.Figure:
-    summary = (
-        scored.groupby("assistant_name")[["visibility_score", "accuracy_score", "trust_score"]]
-        .mean()
-        .reset_index()
-        .melt(id_vars="assistant_name", var_name="metric", value_name="score")
-    )
-    fig = px.bar(
-        summary,
-        x="assistant_name",
-        y="score",
-        color="assistant_name",
-        facet_col="metric",
-        color_discrete_map=ASSISTANT_COLORS,
-        text_auto=".0f",
-    )
-    fig.update_layout(height=300, margin=dict(l=10, r=10, t=20, b=10), showlegend=False)
-    fig.update_xaxes(title="")
-    fig.update_yaxes(title="", range=[0, 100])
-    return fig
-
-
-def trend_chart(trends: pd.DataFrame) -> go.Figure:
-    fig = go.Figure()
-    for metric, color in [
-        ("visibility_score", "#006bbd"),
-        ("accuracy_score", "#0f8a5f"),
-        ("trust_score", "#b7791f"),
-        ("discovery_score", "#425c8a"),
-    ]:
-        fig.add_trace(
-            go.Scatter(
-                x=trends["period"],
-                y=trends[metric],
-                mode="lines+markers",
-                name=metric.replace("_", " ").title(),
-                line=dict(width=3, color=color),
-            )
-        )
-    fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), yaxis_range=[0, 100])
-    return fig
-
-
-def build_monitoring_snapshot(client: dict, ingestion: dict, gateway_actions: pd.DataFrame) -> dict:
-    latest_action = gateway_actions.iloc[0]["timestamp"] if not gateway_actions.empty else client["last_updated"]
-    return {
-        "status": "Monitoring Active" if ingestion["gateway_layer_active"] == "Active" else "Monitoring Paused",
-        "last_monitored": latest_action,
-        "daily_cycle": "Daily cycle active",
-        "gateway_sync": "Gateway sync current" if ingestion["validation_passed"] else "Gateway sync review",
-    }
-
-
-def build_issue_flags(scored: pd.DataFrame, verified_products: pd.DataFrame) -> list[dict]:
-    flags: list[dict] = []
-    for _, row in scored.iterrows():
-        verification = verify_response(row, verified_products)
-        assistant = row.get("assistant_name", "Assistant")
-        product_name = verification.get("product_name") or resolve_primary_product(row) or "Capital One product"
-        if verification["status"] == "inaccurate":
-            for field in verification["field_results"]:
-                if field["status"] != "inaccurate":
-                    continue
-                flags.append(
-                    {
-                        "title": f"{assistant} — {product_name} incorrect {field['field'].replace('_', ' ')}",
-                        "body": f"AI response shows {field['observed']}; verified data shows {field['expected']}.",
-                    }
-                )
-        elif verification["status"] == "incomplete":
-            missing_fields = [
-                field["field"].replace("_", " ")
-                for field in verification["field_results"]
-                if field["status"] == "missing"
-            ]
-            if missing_fields:
-                flags.append(
-                    {
-                        "title": f"{assistant} — {product_name} incomplete claim set",
-                        "body": f"Missing verified fields: {', '.join(missing_fields)}.",
-                    }
-                )
-        elif verification["status"] == "not present":
-            flags.append(
-                {
-                    "title": f"{assistant} — Capital One not surfaced",
-                    "body": "Selected response context did not include a monitored Capital One product.",
-                }
-            )
-    return flags[:8]
 
 
 def normalize_scored_frame(scored: pd.DataFrame) -> pd.DataFrame:
@@ -445,123 +370,354 @@ def normalize_scored_frame(scored: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
-def render_response_monitor(prompt_slice: pd.DataFrame) -> None:
-    for _, row in prompt_slice.iterrows():
-        rank_text = "Not ranked" if int(row.get("rank_position", 0) or 0) == 0 else str(int(row.get("rank_position", 0)))
-        product = resolve_primary_product(row) or "Not surfaced"
-        st.markdown(
-            f"""
-            <div class="response-card">
-                <div class="response-head">
-                    <div class="response-title">{row.get("assistant_name", "Assistant")}</div>
-                    <div class="response-meta">Rank {rank_text} | {product}</div>
-                </div>
-                <div class="response-meta">{summarize_response(row.get("response_text", ""))}</div>
+def short_response_summary(text: str) -> str:
+    if not isinstance(text, str) or not text.strip():
+        return ""
+    sentences = [segment.strip() for segment in text.split(". ") if segment.strip()]
+    summary = ". ".join(sentences[:2]).strip()
+    return summary if summary.endswith(".") else f"{summary}."
+
+
+def relative_day_text(timestamp: str) -> str:
+    try:
+        delta = datetime(2026, 3, 13) - datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
+    except ValueError:
+        return timestamp
+    if delta.days <= 0:
+        return "Today"
+    if delta.days == 1:
+        return "1 day ago"
+    return f"{delta.days} days ago"
+
+
+def render_header() -> None:
+    st.markdown(
+        """
+        <div class="header-card">
+            <div class="header-row">
+                <div class="page-title">Dell VeriPrompt</div>
+                <div class="status-chip">Monitoring Active</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_monitoring_status(timestamp: str) -> None:
+    st.markdown(
+        f"""
+        <div class="section-title" style="margin-bottom:12px;">Monitoring Status</div>
+        <div class="profile-grid" style="grid-template-columns: 118px 1fr; margin-bottom:0;">
+            <div class="profile-label">Status</div>
+            <div class="profile-value">Monitoring Active</div>
+            <div class="profile-label">Last Monitored</div>
+            <div class="profile-value">{timestamp}</div>
+            <div class="profile-label">Cycle</div>
+            <div class="profile-value">Daily</div>
+            <div class="profile-label">Gateway Sync</div>
+            <div class="profile-value">Current</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_client_profile(client: dict, client_products: pd.DataFrame) -> None:
+    products = "".join([f'<span class="chip">{product}</span>' for product in client_products["product_name"].tolist()])
+    st.markdown(
+        f"""
+        <div class="vp-card">
+            <div class="section-title">Client Profile</div>
+            <div class="profile-grid">
+                <div class="profile-label">Client</div>
+                <div class="profile-value">{client['client_name']}</div>
+                <div class="profile-label">Industry</div>
+                <div class="profile-value">{client['industry']}</div>
+                <div class="profile-label">Coverage</div>
+                <div class="profile-value">{client['coverage']}</div>
+                <div class="profile-label">Products Monitored</div>
+                <div class="profile-value"><div class="chip-wrap">{products}</div></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_response_monitor(prompt_slice: pd.DataFrame) -> None:
+    blocks: list[str] = []
+    for _, row in prompt_slice.iterrows():
+        product = resolve_primary_product(row) or "Not surfaced"
+        rank = int(row.get("rank_position", 0) or 0)
+        rank_label = "Not ranked" if rank == 0 else f"Rank {rank}"
+        blocks.append(
+            f"""
+            <div class="response-item">
+                <div class="response-name">{row.get('assistant_name', 'Assistant')}</div>
+                <div class="response-meta">{product} | {rank_label}</div>
+                <div class="response-summary">{short_response_summary(row.get('response_text', ''))}</div>
+            </div>
+            """
         )
+    st.markdown(f'<div class="vp-card"><div class="section-title">AI Response Monitor</div>{"".join(blocks)}</div>', unsafe_allow_html=True)
 
 
-def render_accuracy_audit(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame) -> None:
-    if prompt_slice.empty:
-        st.info("No response records are available for the selected prompt.")
-        return
+def build_issue_rows(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame) -> list[dict]:
+    issues: list[dict] = []
+    for _, row in prompt_slice.iterrows():
+        verification = verify_response(row, verified_products)
+        assistant_name = row.get("assistant_name", "Assistant")
+        product_name = verification.get("product_name") or resolve_primary_product(row) or "Capital One product"
+        if verification["status"] == "inaccurate":
+            for field in verification["field_results"]:
+                if field["status"] != "inaccurate":
+                    continue
+                critical = field["field"] in {"annual_fee", "rewards_rate", "signup_bonus"}
+                issues.append(
+                    {
+                        "assistant": assistant_name,
+                        "title": f"{product_name} incorrect {field['field'].replace('_', ' ')} listed",
+                        "observed": field["observed"],
+                        "expected": field["expected"],
+                        "severity": "Critical" if critical else "Medium",
+                        "critical": critical,
+                    }
+                )
+        elif verification["status"] == "incomplete":
+            missing_fields = [field["field"].replace("_", " ") for field in verification["field_results"] if field["status"] == "missing"]
+            if missing_fields:
+                issues.append(
+                    {
+                        "assistant": assistant_name,
+                        "title": f"{product_name} incomplete claim set",
+                        "observed": ", ".join(missing_fields),
+                        "expected": "Verified attributes required",
+                        "severity": "Medium",
+                        "critical": False,
+                    }
+                )
+    return issues
 
-    issue_flags = build_issue_flags(prompt_slice, verified_products)
-    if issue_flags:
-        for flag in issue_flags:
-            st.markdown(
-                f"""
-                <div class="flag">
-                    <div class="flag-title">{flag['title']}</div>
-                    <div class="flag-body">{flag['body']}</div>
+
+def render_accuracy_card(prompt_slice: pd.DataFrame, verified_products: pd.DataFrame) -> None:
+    issues = build_issue_rows(prompt_slice, verified_products)
+    if not issues:
+        content = """
+        <div class="issue-row" style="border-left-color:#138A36;background:#F6FBF7;">
+            <div class="issue-head">
+                <div>
+                    <div class="issue-assistant">Verification</div>
+                    <div class="issue-title">No issues detected for the selected response set</div>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                <div class="severity-badge" style="background:rgba(19,138,54,0.10);color:#138A36;border-color:rgba(19,138,54,0.18);">Clear</div>
+            </div>
+        </div>
+        """
     else:
-        st.markdown('<div class="status-good">No audit issues detected for the selected response set.</div>', unsafe_allow_html=True)
+        rows: list[str] = []
+        for issue in issues[:6]:
+            rows.append(
+                f"""
+                <div class="issue-row {'critical' if issue['critical'] else ''}">
+                    <div class="issue-head">
+                        <div>
+                            <div class="issue-assistant">{issue['assistant']}</div>
+                            <div class="issue-title">{issue['title']}</div>
+                        </div>
+                        <div class="severity-badge {'critical' if issue['critical'] else ''}">{issue['severity']}</div>
+                    </div>
+                    <div class="issue-grid">
+                        <div class="issue-box">
+                            <div class="card-label">AI Response</div>
+                            <div class="profile-value">{issue['observed']}</div>
+                        </div>
+                        <div class="issue-box">
+                            <div class="card-label">Verified</div>
+                            <div class="profile-value">{issue['expected']}</div>
+                        </div>
+                    </div>
+                </div>
+                """
+            )
+        content = "".join(rows)
+    st.markdown(f'<div class="vp-card"><div class="section-title">Accuracy and Hallucination Detection</div>{content}</div>', unsafe_allow_html=True)
 
-    selected_row = prompt_slice.iloc[0]
-    verification = verify_response(selected_row, verified_products)
-    if verification["field_results"]:
-        st.dataframe(pd.DataFrame(verification["field_results"]), use_container_width=True, hide_index=True)
+
+def render_score_tracking(scorecards: dict[str, float]) -> None:
+    metrics = [
+        ("AI Visibility Score", scorecards["AI Visibility Score"], "Selected context"),
+        ("Accuracy Score", scorecards["Accuracy Score"], "Verified alignment"),
+        ("Trust Score", scorecards["Trust Score"], "Risk control"),
+        ("AI Discovery Score", scorecards["AI Discovery Score"], "Combined score"),
+    ]
+    metric_html = "".join(
+        [
+            f"""
+            <div class="metric-cell">
+                <div class="card-label">{label}</div>
+                <div class="metric-value">{value:.1f}</div>
+                <div class="metric-sub">{sub}</div>
+            </div>
+            """
+            for label, value, sub in metrics
+        ]
+    )
+    st.markdown(f'<div class="vp-card"><div class="section-title">Score Tracking</div><div class="metric-grid">{metric_html}</div></div>', unsafe_allow_html=True)
 
 
-def render_gateway_actions(gateway_actions: pd.DataFrame) -> None:
+def build_signal_breakdown(scored: pd.DataFrame) -> list[tuple[str, float]]:
+    mapping = [
+        ("comparison articles", "Financial comparison articles"),
+        ("rewards summaries", "Rewards feature summaries"),
+        ("product pages", "Product pages"),
+        ("financial review sites", "User reviews"),
+    ]
+    counts = {label: 0 for _, label in mapping}
+    for mix in scored.get("modeled_signal_mix", pd.Series(dtype=str)).fillna(""):
+        lower_mix = mix.lower()
+        for raw, label in mapping:
+            if raw in lower_mix:
+                counts[label] += 1
+    total = sum(counts.values()) or 1
+    return sorted([(label, round((count / total) * 100, 1)) for label, count in counts.items()], key=lambda item: item[1], reverse=True)
+
+
+def render_signal_diagnostics(filtered: pd.DataFrame) -> None:
+    rows = build_signal_breakdown(filtered)
+    signal_html = "".join(
+        [
+            f"""
+            <div class="signal-row">
+                <div class="signal-top"><span>{label}</span><span>{value:.1f}%</span></div>
+                <div class="signal-bar"><div class="signal-fill" style="width:{value}%;"></div></div>
+            </div>
+            """
+            for label, value in rows
+        ]
+    )
+    st.markdown(f'<div class="vp-card"><div class="section-title">Signal Diagnostics</div>{signal_html}</div>', unsafe_allow_html=True)
+
+
+def render_gateway_status(ingestion: dict, gateway_actions: pd.DataFrame) -> None:
+    rewards_update = gateway_actions[gateway_actions["action_title"].str.contains("rewards schema", case=False, na=False)]
+    rewards_update_label = relative_day_text(rewards_update.iloc[0]["timestamp"]) if not rewards_update.empty else "Current"
+    action_list = "".join([f"<li>{action}</li>" for action in gateway_actions["action_title"].head(3).tolist()])
+    st.markdown(
+        f"""
+        <div class="vp-card">
+            <div class="section-title">Gateway Data Status</div>
+            <div class="profile-grid">
+                <div class="profile-label">Data Ingestion</div><div class="profile-value">{'Active' if ingestion['validation_passed'] else ingestion['ingestion_status']}</div>
+                <div class="profile-label">Schema Status</div><div class="profile-value">Current</div>
+                <div class="profile-label">Distribution Status</div><div class="profile-value">Synced</div>
+                <div class="profile-label">Last Structured Rewards Schema Update</div><div class="profile-value">{rewards_update_label}</div>
+            </div>
+            <ul class="gateway-list">{action_list}</ul>
+            <div class="text-button">View All Gateway Actions</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_competitor_analysis(benchmark: pd.DataFrame) -> None:
+    st.markdown('<div class="vp-card"><div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
     st.dataframe(
-        gateway_actions[["timestamp", "action_title", "product_scope", "distribution_status"]],
+        benchmark[["brand", "appearance_frequency", "average_rank_position", "share_of_recommendations"]].rename(
+            columns={
+                "brand": "Brand",
+                "appearance_frequency": "Appearance Frequency",
+                "average_rank_position": "Avg. Rank",
+                "share_of_recommendations": "Share of AI Recommendations",
+            }
+        ),
         use_container_width=True,
         hide_index=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_reporting_summary(monthly_report: dict, quarterly_report: dict) -> None:
+    focus_area = quarterly_report["strategic_recommendations"][0]["title"] if quarterly_report["strategic_recommendations"] else "Maintain current monitoring focus"
+    st.markdown(
+        f"""
+        <div class="vp-card" style="margin-top:24px;">
+            <div class="section-title">Reporting Summary</div>
+            <div class="report-grid">
+                <div>
+                    <div class="report-block-title">Monthly Snapshot</div>
+                    <div class="report-list">
+                        <div class="report-item"><div class="card-label">Visibility Summary</div><div class="profile-value">Visible prompt rate {monthly_report['visible_prompt_rate']}%</div></div>
+                        <div class="report-item"><div class="card-label">Trust Summary</div><div class="profile-value">Trust score {monthly_report['current_trust_score']}</div></div>
+                        <div class="report-item"><div class="card-label">Issues Detected This Month</div><div class="profile-value">{monthly_report['critical_issues']} flagged response records</div></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="report-block-title">Quarterly Outlook</div>
+                    <div class="report-list">
+                        <div class="report-item"><div class="card-label">Trend Direction</div><div class="profile-value">{quarterly_report['performance_summary']}</div></div>
+                        <div class="report-item"><div class="card-label">Projected Opportunity</div><div class="profile-value">{quarterly_report['forecast_projection']}</div></div>
+                        <div class="report-item"><div class="card-label">Recommended Focus Area</div><div class="profile-value">{focus_area}</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 
 def main() -> None:
     inject_styles()
-    clients, prompts, responses, verified_products, gateway_actions, historical_trends, signal_catalog, security_status = load_all_data()
-
+    clients, prompts, responses, verified_products, gateway_actions, historical_trends, signal_catalog = load_all_data()
     all_scored = normalize_scored_frame(score_responses(responses, verified_products).merge(prompts, on="prompt_id", how="left"))
+
+    render_header()
 
     client_names = [client["client_name"] for client in clients]
     industries = sorted({client["industry"] for client in clients})
     assistant_options = sorted(responses["assistant_name"].dropna().unique().tolist())
     category_options = sorted(prompts["category"].dropna().unique().tolist())
 
-    st.markdown(
-        """
-        <div class="workspace-header">
-            <h1>Dell VeriPrompt</h1>
-            <div class="subline">Analyst workspace</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    control_top = st.columns([1.1, 1.0, 1.15, 1.25])
-    selected_client_name = control_top[0].selectbox("Client Selector", client_names, index=0)
-    selected_client = next(client for client in clients if client["client_name"] == selected_client_name)
-    selected_industry = control_top[1].selectbox(
-        "Industry Filter",
-        industries,
-        index=industries.index(selected_client["industry"]) if selected_client["industry"] in industries else 0,
-    )
-    selected_platforms = control_top[3].multiselect("AI Platforms", assistant_options, default=assistant_options)
-
-    client_products = verified_products[verified_products["client_id"] == selected_client["client_id"]].copy()
-    client_scored = all_scored[all_scored["assistant_name"].isin(selected_platforms)].copy() if selected_platforms else all_scored.iloc[0:0].copy()
-
-    ingestion = build_ingestion_status(selected_client, client_products)
-    monitoring = build_monitoring_snapshot(selected_client, ingestion, gateway_actions)
-
-    with control_top[2]:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Monitoring Status</div>', unsafe_allow_html=True)
-        status_block("Status", monitoring["status"])
-        status_block("Last Monitored", monitoring["last_monitored"])
-        status_block("Cycle", monitoring["daily_cycle"])
-        status_block("Gateway Sync", monitoring["gateway_sync"])
+    control_cols = st.columns(4, gap="large")
+    with control_cols[0]:
+        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
+        selected_client_name = st.selectbox("Client Selector", client_names, index=0)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    prompt_col, client_profile_col = st.columns([1.25, 0.95])
+    selected_client = next(client for client in clients if client["client_name"] == selected_client_name)
+    client_products = verified_products[verified_products["client_id"] == selected_client["client_id"]].copy()
+    ingestion = build_ingestion_status(selected_client, client_products)
+    latest_monitor_timestamp = gateway_actions.iloc[0]["timestamp"] if not gateway_actions.empty else selected_client["last_updated"]
+
+    with control_cols[1]:
+        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
+        selected_industry = st.selectbox("Industry Filter", industries, index=industries.index(selected_client["industry"]))
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with control_cols[2]:
+        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
+        selected_platforms = st.multiselect("AI Platforms", assistant_options, default=assistant_options)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with control_cols[3]:
+        st.markdown('<div class="vp-control-card">', unsafe_allow_html=True)
+        render_monitoring_status(latest_monitor_timestamp)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    prompt_col, profile_col = st.columns([0.58, 0.42], gap="large")
     with prompt_col:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown('<div class="vp-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Prompt Control</div>', unsafe_allow_html=True)
         selected_category = st.selectbox("Prompt Category", category_options, index=0)
         prompt_options = prompts[prompts["category"] == selected_category]["prompt_text"].tolist()
         selected_prompt = st.selectbox("Prompt", prompt_options, index=0 if prompt_options else None)
-        run_analysis = st.button("Run Monitoring Analysis", type="primary", use_container_width=False)
+        run_analysis = st.button("Run Monitoring Analysis")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with client_profile_col:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Client Profile</div>', unsafe_allow_html=True)
-        st.markdown(f"**{selected_client['client_name']}**")
-        st.caption(selected_client["account_owner"])
-        st.markdown(f"Coverage: {selected_client['coverage']}")
-        for product in client_products["product_name"].tolist():
-            st.markdown(f'<span class="chip">{product}</span>', unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with profile_col:
+        render_client_profile(selected_client, client_products)
 
     current_selection = {
         "client": selected_client_name,
@@ -570,122 +726,46 @@ def main() -> None:
         "category": selected_category,
         "prompt": selected_prompt,
     }
-
     if run_analysis:
         st.session_state["analysis_selection"] = current_selection
-
     analysis_ready = st.session_state.get("analysis_selection") == current_selection and bool(selected_platforms) and bool(selected_prompt)
 
     if not analysis_ready:
-        st.markdown(
-            """
-            <div class="notice">
-                Select the monitoring inputs and run the analysis to load score tracking, diagnostics, gateway status, competitor analysis, responses, and audit results.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="placeholder-card">Select inputs and run monitoring analysis to load results.</div>', unsafe_allow_html=True)
         return
 
     selected_prompt_id = prompts.loc[prompts["prompt_text"] == selected_prompt, "prompt_id"].iloc[0]
+    client_scored = all_scored[all_scored["assistant_name"].isin(selected_platforms)].copy()
     filtered = client_scored[client_scored["category"] == selected_category].copy()
     prompt_slice = filtered[filtered["prompt_id"] == selected_prompt_id].copy()
     if prompt_slice.empty:
         prompt_slice = client_scored[client_scored["prompt_id"] == selected_prompt_id].copy()
 
-    benchmark = build_competitor_benchmark(filtered if not filtered.empty else prompt_slice)
+    benchmark = build_competitor_benchmark(prompt_slice if not prompt_slice.empty else filtered)
     diagnostics = build_signal_diagnostics(filtered if not filtered.empty else prompt_slice, signal_catalog)
     recommendations = generate_recommendations(filtered if not filtered.empty else prompt_slice, diagnostics, benchmark)
     monthly_report, quarterly_report = build_reporting_payloads(filtered if not filtered.empty else prompt_slice, historical_trends, benchmark, recommendations)
     scorecards = aggregate_scorecards(prompt_slice if not prompt_slice.empty else filtered)
-    gateway = build_gateway_status(client_products, gateway_actions)
-    gateway_preview = build_gateway_payload_preview(client_products)
-    quarterly = quarterly_trends(historical_trends)
-    security_frame = build_security_status_frame(security_status)
-    signal_breakdown = build_signal_breakdown(filtered if not filtered.empty else prompt_slice)
 
-    st.markdown('<div class="section-title">Score Tracking</div>', unsafe_allow_html=True)
-    score_cols = st.columns(4)
-    with score_cols[0]:
-        metric_card("AI Visibility Score", f"{scorecards['AI Visibility Score']:.1f}", "Selected prompt context")
-    with score_cols[1]:
-        metric_card("Accuracy Score", f"{scorecards['Accuracy Score']:.1f}", "Verified claim alignment")
-    with score_cols[2]:
-        metric_card("Trust Score", f"{scorecards['Trust Score']:.1f}", "Misinformation risk control")
-    with score_cols[3]:
-        metric_card("AI Discovery Score", f"{scorecards['AI Discovery Score']:.1f}", "Combined operating metric")
-
-    top_left, top_right = st.columns([1.05, 0.95])
-    with top_left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Signal Diagnostics</div>', unsafe_allow_html=True)
-        if not signal_breakdown.empty:
-            st.plotly_chart(signal_breakdown_chart(signal_breakdown), use_container_width=True)
-            st.dataframe(signal_breakdown[["signal", "percentage"]], use_container_width=True, hide_index=True)
-        st.dataframe(
-            diagnostics[["signal_type", "modeled_influence_score", "coverage", "avg_accuracy", "avg_trust"]],
-            use_container_width=True,
-            hide_index=True,
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with top_right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Gateway Data Status</div>', unsafe_allow_html=True)
-        gateway_update = gateway_actions[gateway_actions["action_title"].str.contains("rewards schema", case=False, na=False)]
-        last_schema_update = relative_day_text(gateway_update.iloc[0]["timestamp"]) if not gateway_update.empty else "Current"
-        status_cols = st.columns(2)
-        with status_cols[0]:
-            status_block("Gateway Status", gateway["gateway_status"])
-            status_block("Data Ingestion", ingestion["ingestion_status"])
-            status_block("Normalization", "Current")
-        with status_cols[1]:
-            status_block("Rewards Schema", last_schema_update)
-            status_block("Distribution", "Published")
-            status_block("Security", security_status["risk_posture"])
-        if st.button("View All Gateway Actions", key="view_gateway_actions"):
-            st.session_state["show_gateway_actions"] = not st.session_state.get("show_gateway_actions", False)
-        if st.session_state.get("show_gateway_actions", False):
-            render_gateway_actions(gateway_actions)
-        st.dataframe(gateway_preview, use_container_width=True, hide_index=True)
-        st.dataframe(security_frame, use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    mid_left, mid_right = st.columns([1.0, 1.0])
-    with mid_left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Competitor Analysis</div>', unsafe_allow_html=True)
-        benchmark_view = benchmark.head(6).copy()
-        st.dataframe(benchmark_view, use_container_width=True, hide_index=True)
-        st.plotly_chart(assistant_summary_chart(filtered if not filtered.empty else prompt_slice), use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with mid_right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">AI Response Monitor</div>', unsafe_allow_html=True)
-        st.caption(selected_prompt)
+    response_col, audit_col = st.columns([0.58, 0.42], gap="large")
+    with response_col:
         render_response_monitor(prompt_slice)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with audit_col:
+        render_accuracy_card(prompt_slice, client_products)
 
-    bottom_left, bottom_right = st.columns([1.0, 1.0])
-    with bottom_left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Accuracy and Hallucination Detection</div>', unsafe_allow_html=True)
-        render_accuracy_audit(prompt_slice, client_products)
-        st.markdown("</div>", unsafe_allow_html=True)
+    score_col, signal_col = st.columns([0.58, 0.42], gap="large")
+    with score_col:
+        render_score_tracking(scorecards)
+    with signal_col:
+        render_signal_diagnostics(filtered if not filtered.empty else prompt_slice)
 
-    with bottom_right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Score Tracking History</div>', unsafe_allow_html=True)
-        st.plotly_chart(trend_chart(quarterly), use_container_width=True)
-        st.markdown(
-            f"Visible prompt rate: `{monthly_report['visible_prompt_rate']}%` | Critical issues: `{monthly_report['critical_issues']}` | "
-            f"Average rank when present: `{safe_mean((filtered if not filtered.empty else prompt_slice)[(filtered if not filtered.empty else prompt_slice)['capital_one_present']]['rank_position'])}`"
-        )
-        st.markdown("**Recommendations**")
-        for rec in quarterly_report["strategic_recommendations"]:
-            st.markdown(f"- {rec['title']}")
-        st.markdown("</div>", unsafe_allow_html=True)
+    gateway_col, competitor_col = st.columns([0.58, 0.42], gap="large")
+    with gateway_col:
+        render_gateway_status(ingestion, gateway_actions)
+    with competitor_col:
+        render_competitor_analysis(benchmark)
+
+    render_reporting_summary(monthly_report, quarterly_report)
 
 
 if __name__ == "__main__":
